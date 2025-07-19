@@ -92,4 +92,23 @@ for file in "${FILES_TO_MODIFY[@]}"; do
 done
 
 echo "Placeholders replaced successfully."
-echo "Next, you will need to run a script to create symbolic links."
+
+# --- Final Step: Link the plugin to Cockpit ---
+echo ""
+echo "--- Final Step: Linking the plugin to Cockpit ---"
+
+# Define Cockpit's plugin directory and the source/target paths
+COCKPIT_PLUGINS_DIR="/usr/share/cockpit"
+SOURCE_DIR="$PWD/$NEW_PLUGIN_DIR_PATH"
+SYMLINK_TARGET="$COCKPIT_PLUGINS_DIR/$NEW_PLUGIN_NAME"
+
+echo "Plugin scaffolding complete. To make the plugin visible in Cockpit, you must create a symbolic link."
+echo "This step requires root privileges. Please copy and run the following command:"
+echo ""
+echo "  sudo ln -s \"$SOURCE_DIR\" \"$SYMLINK_TARGET\""
+echo ""
+echo "After creating the link, restart the Cockpit service to see your plugin:"
+echo "  sudo systemctl restart cockpit.socket"
+
+echo ""
+echo "Initialization complete for '$NEW_PLUGIN_NAME'!"
