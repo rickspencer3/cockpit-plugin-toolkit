@@ -107,7 +107,9 @@ echo "This step requires root privileges. Please copy and run the following comm
 echo ""
 echo "  sudo ln -s \"$SOURCE_DIR\" \"$SYMLINK_TARGET\""
 echo ""
-echo "After creating the link, restart the Cockpit service to see your plugin:"
+echo "After creating the link, open https://localhost:9090 in your browser window and log in."
+echo "You will see $NEW_PLUGIN_NAME in the list of plugins."
+echo "if this doesnt work, try torestart the Cockpit service to see your plugin:"
 echo "  sudo systemctl restart cockpit.socket"
 
 echo ""
