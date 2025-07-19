@@ -1,5 +1,3 @@
-// Import the Cockpit API
-import { cockpit } from "/cockpit/base1.js";
 
 // Wait for the DOM to be fully loaded
 document.addEventListener("DOMContentLoaded", () => {
@@ -12,14 +10,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // Add a click event listener to the button
     if (myButton) {
         myButton.addEventListener("click", () => {
-            messageArea.textContent = cockpit.get  text("button-clicked-message");
+            messageArea.textContent = cockpit.gettext("button-clicked-message");
         });
     }
 
     // Example of using translations for elements with data-i18n attribute
     document.querySelectorAll("[data-i18n]").forEach(element => {
         const key = element.getAttribute("data-i18n");
-        element.textContent = cockpit.get  text(key);
+        element.textContent = cockpit.gettext(key);
     });
 
     // You can add more plugin-specific logic here

@@ -7,6 +7,5 @@
   },
   "requires": {
     "cockpit": "186"
-  },
-  "translations": "po"
+  }
 }
