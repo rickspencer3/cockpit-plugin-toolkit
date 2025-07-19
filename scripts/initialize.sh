@@ -23,7 +23,7 @@ if [[ ! "$NEW_PLUGIN_NAME" =~ ^[a-z0-9]+([-_][a-z0-9]+)*$ ]]; then
     error_exit "Invalid plugin name. Please use lowercase alphanumeric characters, hyphens, or underscores. It cannot start or end with a hyphen/underscore, or have consecutive hyphens/underscores. Example: my-awesome-plugin"
 fi
 
-# Define the old and new names for replacement (for later use, not in this version of the script)
+# Define the old and new names for replacement
 OLD_PLUGIN_ID="TEMPLATE_PLUGIN_ID"
 OLD_PLUGIN_LABEL="Template Plugin Name"
 
@@ -63,4 +63,33 @@ echo "Copying contents from '$TEMPLATE_DIR' to '$NEW_PLUGIN_DIR_PATH'..."
 cp -R "$TEMPLATE_DIR"/* "$NEW_PLUGIN_DIR_PATH/" || error_exit "Failed to copy template contents."
 
 echo "New plugin directory '$NEW_PLUGIN_NAME' created and populated successfully at '$PWD/$NEW_PLUGIN_NAME'."
-echo "Next, you will need to run a script to replace placeholders and create symbolic links."
+
+# --- Add Step: Replace placeholders in files ---
+echo "Replacing placeholders in plugin files within '$NEW_PLUGIN_DIR_PATH'..."
+
+# List of files to modify (relative to the new plugin directory)
+FILES_TO_MODIFY=(
+    "manifest.json"
+    "index.html"
+    "script.js"
+    "style.css"
+    "po/en.po"
+)
+
+# Iterate through files and perform replacements
+for file in "${FILES_TO_MODIFY[@]}"; do
+    FILE_PATH="$NEW_PLUGIN_DIR_PATH/$file"
+    if [ -f "$FILE_PATH" ]; then
+        echo "  - Processing $FILE_PATH"
+        # Use sed for in-place replacement. Use a temporary file for safety.
+        # macOS sed requires a backup extension (e.g., '')
+        sed -i.bak "s/$OLD_PLUGIN_ID/$NEW_PLUGIN_NAME/g" "$FILE_PATH"
+        sed -i.bak "s/$OLD_PLUGIN_LABEL/$NEW_PLUGIN_LABEL/g" "$FILE_PATH"
+        rm "${FILE_PATH}.bak" # Remove the backup file
+    else
+        echo "  - Warning: File not found: $FILE_PATH"
+    fi
+done
+
+echo "Placeholders replaced successfully."
+echo "Next, you will need to run a script to create symbolic links."
