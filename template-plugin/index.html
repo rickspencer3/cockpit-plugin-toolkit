@@ -9,14 +9,14 @@
       This provides the base PatternFly styles that your plugin can use and override.
     -->
     <link href="style.css" rel="stylesheet">
+    <!-- Load the global cockpit API object; use an absolute path for robustness -->
     <script src="../base1/cockpit.js" defer></script>
-    <script src="script.js" type="module" defer></script>
+    <script src="script.js" defer></script>
 </head>
 <body>
     <div class="content-wrapper">
         <h1>Template Plugin Name</h1>
         <p>Welcome to your new Cockpit plugin!</p>
-        <p data-i18n="hello-message">Hello, Cockpit!</p>
         <button id="myButton" type="button">Click Me</button>
         <div id="messageArea"></div>
     </div>
