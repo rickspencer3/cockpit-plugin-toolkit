@@ -1,0 +1,12 @@
+{
+  "tools": {
+    "TEMPLATE_PLUGIN_ID": {
+      "label": "Template Plugin Name",
+      "path": "index.html"
+    }
+  },
+  "requires": {
+    "cockpit": "186"
+  },
+  "translations": "po"
+}
