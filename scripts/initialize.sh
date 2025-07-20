@@ -73,7 +73,6 @@ FILES_TO_MODIFY=(
     "index.html"
     "script.js"
     "style.css"
-    "po/en.po"
 )
 
 # Iterate through files and perform replacements
