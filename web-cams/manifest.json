@@ -1,0 +1,11 @@
+{
+  "tools": {
+    "web-cams": {
+      "label": "Web Cams",
+      "path": "index.html"
+    }
+  },
+  "requires": {
+    "cockpit": "186"
+  }
+}
