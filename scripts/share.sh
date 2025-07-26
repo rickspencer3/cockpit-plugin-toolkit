@@ -97,6 +97,8 @@ echo "Successfully authenticated as OBS user: $OBS_USER"
 # --- 4. Define project and package names ---
 PLUGIN_PROJECT="home:$OBS_USER:$PLUGIN_NAME"
 PACKAGE_NAME="cockpit-$PLUGIN_NAME"
+# Convert plugin name to a more readable label for the title (e.g., local-network -> Local Network)
+PACKAGE_TITLE=$(echo "$PLUGIN_NAME" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
 PROJECT_URL="${OBS_API_URL/api/build}/project/show/$PLUGIN_PROJECT"
 
 echo "Using OBS project: $PLUGIN_PROJECT"
@@ -116,11 +118,11 @@ if ! osc -A "$OBS_API_URL" meta prj "$PLUGIN_PROJECT" &> /dev/null; then
     # A default build target for openSUSE Tumbleweed is included.
     cat > "$PROJECT_META_FILE" <<- EOF
 <project name="$PLUGIN_PROJECT">
-  <title>Cockpit Plugin: $PLUGIN_NAME</title>
+  <title>Cockpit Plugin: $PACKAGE_TITLE</title>
   <description>An OBS project for the $PLUGIN_NAME Cockpit plugin.</description>
   <url>https://github.com/YOUR_USERNAME/$PLUGIN_NAME</url>
   <repository name="openSUSE_Tumbleweed">
-    <path project="openSUSE:Factory" repository="snapshot"/>
+    <path project="openSUSE:Tumbleweed" repository="standard"/>
     <arch>x86_64</arch>
   </repository>
 </project>
@@ -141,6 +143,29 @@ else
     echo "Project '$PLUGIN_PROJECT' already exists."
 fi
 
+# --- 5b. Verify and set project configuration for dependency resolution ---
+echo "Verifying project configuration (prjconf)..."
+# Fetch the current prjconf. The '2>/dev/null' silences errors if it doesn't exist.
+CURRENT_PRJCONF=$(osc -A "$OBS_API_URL" meta prjconf "$PLUGIN_PROJECT" 2>/dev/null)
+
+# Check if the preference for polkit is already set.
+if ! echo "$CURRENT_PRJCONF" | grep -q "Prefer: polkit"; then
+    echo "Project configuration is missing dependency preference. Setting it now..."
+    # Append 'Prefer: polkit' to the existing config, or create it if it's empty.
+    # Using a temp file to handle this safely.
+    PRJCONF_FILE=$(mktemp)
+    trap 'rm -f "$PRJCONF_FILE"' EXIT
+    
+    echo "$CURRENT_PRJCONF" > "$PRJCONF_FILE"
+    echo "Prefer: polkit" >> "$PRJCONF_FILE"
+
+    if osc -A "$OBS_API_URL" meta prjconf -F "$PRJCONF_FILE" "$PLUGIN_PROJECT"; then
+        echo "Successfully set 'Prefer: polkit' in project configuration."
+    else
+        error_exit "Failed to set project configuration (prjconf). Please check the project manually."
+    fi
+fi
+
 # --- 6. Check for and create the package within the project ---
 echo "Checking for existing OBS package '$PACKAGE_NAME' in project '$PLUGIN_PROJECT'..."
 
@@ -153,12 +178,11 @@ else
 # The 'osc mkpac' command can be unreliable in scripts depending on the osc version,
 # sometimes causing a 'Wrong number of arguments' error as you observed.
 # A more robust method is to explicitly create the package metadata and use 'osc meta pkg'.
-PACKAGE_META_FILE=$(mktemp)
+    PACKAGE_META_FILE=$(mktemp)
+    # Ensure the temp file is cleaned up on script exit
+    trap 'rm -f "$PACKAGE_META_FILE"' EXIT
 
-# Convert plugin name to a more readable label for the title (e.g., local-network -> Local Network)
-PACKAGE_TITLE=$(echo "$PLUGIN_NAME" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
-
-cat > "$PACKAGE_META_FILE" <<- EOF
+    cat > "$PACKAGE_META_FILE" <<- EOF
 <package name="$PACKAGE_NAME" project="$PLUGIN_PROJECT">
   <title>Cockpit Plugin: $PACKAGE_TITLE</title>
   <description>RPM package for the $PLUGIN_NAME Cockpit plugin.</description>
@@ -167,10 +191,8 @@ EOF
 
     # Use 'osc meta pkg' to create the package using the metadata file.
     if ! osc -A "$OBS_API_URL" meta pkg -F "$PACKAGE_META_FILE" "$PLUGIN_PROJECT" "$PACKAGE_NAME"; then
-        rm -f "$PACKAGE_META_FILE"
         error_exit "Failed to create OBS package '$PACKAGE_NAME' in project '$PLUGIN_PROJECT'."
     fi
-    rm -f "$PACKAGE_META_FILE"
     echo "Successfully created OBS package: $PACKAGE_NAME in project $PLUGIN_PROJECT"
 fi
 
@@ -210,15 +232,26 @@ echo "--- Preparing to Upload/Update Files from '$PLUGIN_NAME' ---"
 	URL:            https://github.com/YOUR_USERNAME/%{plugin_name}
 	BuildArch:      noarch
 	
+	# The build system needs the main cockpit package to be present
+	# to satisfy the check for unowned directories.
+	BuildRequires:  cockpit
+
+	# This plugin requires the main cockpit package to be installed.
+	Requires:       cockpit
+	
 	# The source is the content of this package, no separate tarball is needed.
 	
 	%description
 	The Cockpit plugin for $PACKAGE_TITLE. This package is auto-generated.
 	
 	%install
+	# The build root is where the package contents are staged.
 	mkdir -p %{buildroot}/usr/share/cockpit/%{plugin_name}
-	# Copy all source files into the target directory, excluding the .osc control dir and spec file
-	rsync -a --exclude '.osc' --exclude '*.spec' . %{buildroot}/usr/share/cockpit/%{plugin_name}/
+	# The %install script runs in a different directory from where the source
+	# files are located. We must use the %{_sourcedir} macro to reference them.
+	cp -a %{_sourcedir}/* %{buildroot}/usr/share/cockpit/%{plugin_name}/
+	# Remove the .spec file itself, as it's not part of the installed plugin.
+	rm -f %{buildroot}/usr/share/cockpit/%{plugin_name}/%{name}.spec
 	
 	%files
 	# Own the directory where the plugin is installed
