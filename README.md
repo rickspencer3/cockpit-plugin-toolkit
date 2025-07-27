@@ -37,9 +37,9 @@ The script will create a new directory (`hello-world/`) containing all the neces
 
 #### Local Development
 
-To test your plugin locally as you develop, the script will provide you with a `sudo ln -s ...` command. Running this command will create a symbolic link from your plugin's directory to Cockpit's plugin directory.
+To test your plugin locally as you develop, the `initialize.sh` script automatically creates a symbolic link from your new plugin directory to your user's local Cockpit directory (`~/.local/share/cockpit`). This allows you to see your changes in Cockpit without needing `sudo` for the initial setup.
 
-After creating the link, you may need to restart the Cockpit service:
+After the link is created, you can start developing. If you make changes and don't see them reflected, you may need to restart the Cockpit service:
 ```bash
 sudo systemctl restart cockpit.socket
 ```

@@ -94,24 +94,30 @@ echo "Placeholders replaced successfully."
 
 # --- Final Step: Link the plugin to Cockpit ---
 echo ""
-echo "--- Final Step: Linking the plugin to Cockpit ---"
+echo "--- Final Step: Linking the plugin for local development ---"
 
 # Define Cockpit's plugin directory and the source/target paths
-COCKPIT_PLUGINS_DIR="/usr/share/cockpit"
+COCKPIT_PLUGINS_DIR="$HOME/.local/share/cockpit"
 SOURCE_DIR="$PWD/$NEW_PLUGIN_DIR_PATH"
 SYMLINK_TARGET="$COCKPIT_PLUGINS_DIR/$NEW_PLUGIN_NAME"
 
-echo "Plugin scaffolding complete. To make the plugin visible in Cockpit, you must create a symbolic link."
-echo "This step requires root privileges. Please copy and run the following command:"
+echo "To make the plugin visible in Cockpit for local development, a symbolic link"
+echo "will be created in your user's local Cockpit directory: $COCKPIT_PLUGINS_DIR"
+
+# Ensure the local Cockpit plugin directory exists
+mkdir -p "$COCKPIT_PLUGINS_DIR"
+
+echo "Creating symbolic link: $SYMLINK_TARGET"
+ln -s "$SOURCE_DIR" "$SYMLINK_TARGET"
+
 echo ""
-echo "  sudo ln -s \"$SOURCE_DIR\" \"$SYMLINK_TARGET\""
+echo "Symbolic link created successfully!"
 echo ""
-echo "After creating the link, open https://localhost:9090 in your browser window and log in."
-echo "You will see $NEW_PLUGIN_NAME in the list of plugins."
-echo ""
-echo "if this doesnt work, try torestart the Cockpit service to see your plugin:"
+echo "You can now start developing. After making changes, you may need to restart"
+echo "the Cockpit service to see them reflected:"
 echo ""
 echo "  sudo systemctl restart cockpit.socket"
 echo ""
+echo "Then, log into Cockpit (usually at https://localhost:9090) to see your plugin."
 echo ""
 echo "Initialization complete for '$NEW_PLUGIN_NAME'!"
